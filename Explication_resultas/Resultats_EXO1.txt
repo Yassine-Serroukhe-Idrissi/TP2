@@ -1,0 +1,11 @@
+UnoptimisedStruct1[]
+Count Diff: -8
+Size Diff: -39.3 KB
+This means Snapshot B has 8 fewer UnoptimisedStruct1[] objects than Snapshot A, and the total memory for those arrays dropped by about 39.3 KB. In other words, if they are completely gone in Snapshot B (count in B = 0), then Snapshot A had roughly 8 arrays totaling ~39.3 KB.
+
+UnoptimisedStruct2[]
+Count Diff: -8
+Size Diff: -36.6 KB
+Likewise, Snapshot B has 8 fewer UnoptimisedStruct2[] objects than Snapshot A, reducing memory usage by around 36.6 KB. If none remain in Snapshot B (count in B = 0), it means Snapshot A had about 8 arrays consuming ~36.6 KB in total.
+
+La diminution du nombre de UnoptimizedStruct2 dans le nouveau code s'explique probablement par une réduction des allocations distinctes. Dans cette version, des champs comme mainFriend sont stockés directement dans UnoptimisedStruct1 et les tableaux comme otherFriends sont soit plus petits, soit moins fréquemment alloués. De plus, en limitant le boxing et l'utilisation de collections non génériques, on génère moins d'instances distinctes, ce qui se reflète dans le décompte affiché par le profileur.
