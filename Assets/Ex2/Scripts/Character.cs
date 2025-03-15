@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
 
 public class Character : MonoBehaviour
 {
@@ -14,31 +14,22 @@ public class Character : MonoBehaviour
     private const float DamagePerSecond = 50;
 
     private const float DamageRange = 10;
+    private List<Circle> nearbyCircles = new List<Circle>();
 
     private void Update()
     {
-        Move();
-
-        /*Les deux fonction DamageNearbyCircles et UpdateAcceleration utilise toute deux le même voisinage
-        On le détermine donc en amont.*/
+        nearbyCircles.Clear();
         var nearbyColliders = Physics2D.OverlapCircleAll(transform.position, DamageRange);
-        //On récupère directemment les cercles à partir des colliders prélevés juste au dessus.
-        /*Dans le cas où un de ces colliders ne serait pas attaché à un gameObject avec une composant Circle,
-        nous avons préféré utiliser une liste que l'on transforme ensuite en array pour une plus grande performance
-        du fait d'un accès contigu des valeurs en mémoire.*/
-        var nearbyCirclesList = new List<Circle>();
-        for (var i = 0; i < nearbyColliders.Length; i++)
+        foreach (var nearbyCollider in nearbyColliders)
         {
-            var nearbyCollider = nearbyColliders[i];
             if (nearbyCollider != null && nearbyCollider.TryGetComponent<Circle>(out var circle))
             {
-                nearbyCirclesList.Add(circle);
+                nearbyCircles.Add(circle);
             }
         }
-        var nearbyCircles = nearbyCirclesList.ToArray();
-
-        DamageNearbyCircles(nearbyCircles);
-        UpdateAcceleration(nearbyCircles);
+        Move();
+        DamageNearbyShapes();
+        UpdateAcceleration();
     }
 
     private void Move()
@@ -51,7 +42,7 @@ public class Character : MonoBehaviour
         transform.position += _velocity * Time.deltaTime;
     }
 
-    private void UpdateAcceleration(Circle[] nearbyCircles)
+    private void UpdateAcceleration()
     {
         var direction = Vector3.zero;
         foreach (var circle in nearbyCircles)
@@ -61,19 +52,17 @@ public class Character : MonoBehaviour
         _acceleration = direction.normalized * AccelerationMagnitude;
     }
 
-    private void DamageNearbyCircles(Circle[] nearbyCircles)
+    private void DamageNearbyShapes()
     {
         // Si aucun cercle proche, on retourne a (0,0,0)
-        if (nearbyCircles.Length == 0)
+        if (nearbyCircles.Count == 0)
         {
             transform.position = Vector3.zero;
         }
 
-        //Calcul des HPs enlevés avant d'itérer sur tous les cercles voisins.
-        float hpReceived = -DamagePerSecond * Time.deltaTime;
         foreach (var circle in nearbyCircles)
         {
-            circle.ReceiveHp(hpReceived);
+            circle.ReceiveHp(-DamagePerSecond * Time.deltaTime);
         }
     }
 }

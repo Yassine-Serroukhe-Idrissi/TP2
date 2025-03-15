@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class GridShape : MonoBehaviour
+public class Grid : MonoBehaviour
 {
     [FormerlySerializedAs("m_ShapePrefab")]
     [SerializeField]
@@ -15,8 +14,6 @@ public class GridShape : MonoBehaviour
 
     private int _width;
     private int _height;
-    private Queue<GameObject> _objectPool = new Queue<GameObject>();
-
 
     // Start is called before the first frame update
     private void Start()
@@ -32,13 +29,6 @@ public class GridShape : MonoBehaviour
         var invWidth = 1f / _width;
         var invHeight = 1f / _height;
 
-        for (int k = 0; k < _width * _height; k++)
-        {
-            var obj = Instantiate(shapePrefab);
-            obj.SetActive(false); // Désactive l’objet pour éviter de le dessiner inutilement
-            _objectPool.Enqueue(obj);
-        }
-
         for (var i = 0; i < _width; i++)
         {
             for (var j = 0; j < _height; j++)
@@ -47,15 +37,9 @@ public class GridShape : MonoBehaviour
                 var g = Mathf.Abs(j - halfHeight) * invHeight;
                 var b = r * g;
                 Colors[i, j] = new Color(r, g, b);
-
-                // Récupère un objet du pool au lieu de l’instancier
-                var shape = _objectPool.Dequeue();
-                shape.SetActive(true);
-                shape.transform.position = bottomLeftCorner + new Vector3(i, j, 0);
-
-                var circle = shape.GetComponent<Circle>();
-                circle.i = i;
-                circle.j = j;
+                var shape = Instantiate(shapePrefab, bottomLeftCorner + new Vector3(i, j, 0), Quaternion.identity);
+                shape.GetComponent<Circle>().i = i;
+                shape.GetComponent<Circle>().j = j;
             }
         }
     }
@@ -68,19 +52,12 @@ public class GridShape : MonoBehaviour
 
     private void UpdateColors()
     {
-        var colorBuffer = new Color[_width];
-
-        for (var j = 0; j < _height - 1; j++)
+        for (var j = 0; j < _height; j++)
         {
             for (var i = 0; i < _width; i++)
             {
-                colorBuffer[i] = Colors[i, j + 1];
-            }
-
-            for (var i = 0; i < _width; i++)
-            {
-                Colors[i, j + 1] = Colors[i, j];
-                Colors[i, j] = colorBuffer[i];
+                if (j >= _height - 1) continue;
+                (Colors[i, j], Colors[i, j + 1]) = (Colors[i, j + 1], Colors[i, j]);
             }
         }
     }
